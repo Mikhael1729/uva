@@ -37,8 +37,7 @@ int combinations[18] = {
 };
 
 void compute(vector<int> bins)
-{
-  // j: indicates the current color position in a bin (1: brown, 2: green, 3: clear)
+{ // j: indicates the current color position in a bin (1: brown, 2: green, 3: clear)
   // k: indicates the bin where will the box that contains bottles of an specific color be put.
   // l: current bin in the series of 3 bins.
   string best = "ZZZ", worst = "";
@@ -55,6 +54,8 @@ void compute(vector<int> bins)
     if(!isInCurrentBin(index, bin))
       current += value;
 
+    //cout << "j: " << j << ", k: " << k << ", i: " << i << ", c:" << c << ", box: " <<  box << ", index: " << index << ", l: " << l << ", bin: " << bin << endl;
+
     if(k < 3)
       k++;
     else
@@ -63,16 +64,21 @@ void compute(vector<int> bins)
       k = 1, j = combinations[++l];
     }
 
-    // If is ended the process of a serie of 3 bins, 
+    // If is ended the process of a serie of 3 bins.
     if(box == 8)
     {
-      // Update the value of the best disposition.
-      if(best > worst || current < smallest)
-        best = worst;
+      //cout << "worst: " << worst << ", best: " << best << endl;
+      //cout << "current: " << current << ", smallest: " << smallest << endl;
+
 
       // Update the value of the smallest quantity with the new one.
-      if(current < smallest)
+      if(smallest > current)
+      {
         smallest = current;
+        best = worst;
+      }
+      else if (best > worst && smallest == current)
+        best = worst;
 
       // Restart current quantity of movements value. Also, sum 9 to adjust the `i` value.
       current = 0, c += 9, o += 3, worst = "";
@@ -85,7 +91,7 @@ void compute(vector<int> bins)
 int main() {
   // Request bins.
   vector<int> bins;
-  int n, i = 0;
+  int n;
   while(scanf("%d", &n) == 1)
     bins.push_back(n);
 
@@ -100,6 +106,7 @@ int main() {
       current.clear();
     }
   }
+  cout << "" << endl;
 
   return 0;
 }
