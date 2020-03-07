@@ -29,34 +29,29 @@ bool isInCurrentBin(int index, int bin)
   return ((index < start || index > end) ? false : true);
 }
 
-int main() {
-  int combinations[18] = {
-    1, 2, 3,
-    1, 3, 2,
-    3, 1, 2,
-    3, 2, 1,
-    2, 3, 1,
-    2, 1, 3
-  };
+int combinations[18] = {
+  1, 2, 3,
+  1, 3, 2,
+  3, 1, 2,
+  3, 2, 1,
+  2, 3, 1,
+  2, 1, 3
+};
 
-  // Request bins1
-  int n;
-  vector<int> bins1;
-  while(scanf("%d", &n) == 1)
-    bins1.push_back(n);
-
+void compute(vector<int> bins)
+{
   // j: indicates the current color position in a bin (1: brown, 2: green, 3: clear)
   // k: indicates the bin where will the box that contains bottles of an specific color be put.
   // l: current bin in the series of 3 bins.
   string best = "ZZZ", worst = "";
   int smallest = numeric_limits<int>::max(), current = 0, c = 0;
   int box, bin, index, value;
-  for(int i = 0, j = combinations[0], k = 1, l = 0, o = 0; i < bins1.size() * 6; i++)
+  for(int i = 0, j = combinations[0], k = 1, l = 0, o = 0; i < bins.size() * 6; i++)
   {
     box = (c > i ? c - i : i - c); // Current box in the combinations.
     bin = l - o; // Current bin in the real serie of boxes
     index = ((3 * k - 3) + (j - 1));  // Index where is the box of bottles in process: bin index (in a linear position) + box color index.
-    value = bins1[index]; // The quantity of bottles in the box of bottles of the current color in proceess.,
+    value = bins[index]; // The quantity of bottles in the box of bottles of the current color in proceess.,
 
     // Sum the quantity of movments that are needed to be done in the current combination of 3 bins.
     if(!isInCurrentBin(index, bin))
@@ -67,8 +62,7 @@ int main() {
     else
     {
       worst += computeLetter(j);
-      k = 1;
-      j = combinations[++l];
+      k = 1, j = combinations[++l];
     }
 
     // If is ended the process of a serie of 3 bins, 
@@ -83,21 +77,32 @@ int main() {
         smallest = current;
 
       // Restart current quantity of movements value. Also, sum 9 to adjust the `i` value.
-      current = 0, c += 9, o += 3;
-      worst = "";
+      current = 0, c += 9, o += 3, worst = "";
     }
   }
 
   cout << best << " " << smallest << endl;
+}
 
-  // ORIGINAL:            [1, 2, 3] , [4, 5, 6] , [7, 8, 9]
-  //
-  // COMBINATION 1 (BGC): [1, 4, 7] , [2, 5, 8] , [3, 6, 9]
-  // COMBINATION 6 (BCG): [1, 4, 7] , [3, 6, 9] , [2, 5, 8]
-  // COMBINATION 5 (CBG): [3, 6, 9] , [1, 4, 7] , [2, 5, 8]
-  // COMBINATION 4 (CGB): [3, 6, 9] , [2, 5, 8] , [1, 4, 7]
-  // COMBINATION 3 (GCB): [2, 5, 8] , [3, 6, 9] , [1, 4, 7]
-  // COMBINATION 2 (GBC): [2, 5, 8] , [1, 4, 7] , [3, 6, 9]
+int main() {
+
+  // Request bins.
+  vector<int> bins;
+  int n, i = 0;
+  while(scanf("%d", &n) == 1)
+    bins.push_back(n);
+
+  // Compute oputput.
+  vector<int> current;
+  for(int i = 0; i < bins.size(); i++)
+  {
+    current.push_back(bins[i]);
+    if(current.size() == 9)
+    {
+      compute(current);
+      current.clear();
+    }
+  }
 
   return 0;
 }
