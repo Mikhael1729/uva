@@ -30,19 +30,6 @@ bool isInCurrentBin(int index, int bin)
 }
 
 int main() {
-  // INPUT:
-  //   - Bin 1: Brown, Green, Clear.
-  //   - Bin 2: Brown, Green, Clear.
-  //   - Bin 3: Brown, Green, Clear.
-  //
-  // PROCESS:
-  //    Compute all possible combinations of bin bottle boxes dispositions that put
-  //    all box bottles of a specific color in a bin and choose the one whose movements of bottles is minimum
-  //
-  //  OUTPUT:
-  //    - A string with letters 'B', 'G', 'C' that indidicates in which bin are
-  //      placed the box bottles of an specific color.
-
   int combinations[18] = {
     1, 2, 3,
     1, 3, 2,
@@ -75,8 +62,6 @@ int main() {
     if(!isInCurrentBin(index, bin))
       current += value;
 
-    cout << "j: " << j << ", k: " << k << ", i: " << i << ", c:" << c << ", box: " <<  box << ", index: " << index << ", l: " << l << ", bin: " << bin << endl;
-
     if(k < 3)
       k++;
     else
@@ -89,25 +74,21 @@ int main() {
     // If is ended the process of a serie of 3 bins, 
     if(box == 8)
     {
-      cout << "quantity: " << current << endl;
-      cout << "worst: " << worst << endl;
+      // Update the value of the best disposition.
+      if(best > worst || current < smallest)
+        best = worst;
+
       // Update the value of the smallest quantity with the new one.
       if(current < smallest)
         smallest = current;
-
-      // Update the value of the best disposition.
-      if(best > worst)
-        best = worst;
 
       // Restart current quantity of movements value. Also, sum 9 to adjust the `i` value.
       current = 0, c += 9, o += 3;
       worst = "";
     }
-
   }
 
-  cout << "Selected minimum: " << smallest << endl;
-  cout << "Selected disposition: " << best << endl;
+  cout << best << " " << smallest << endl;
 
   // ORIGINAL:            [1, 2, 3] , [4, 5, 6] , [7, 8, 9]
   //
