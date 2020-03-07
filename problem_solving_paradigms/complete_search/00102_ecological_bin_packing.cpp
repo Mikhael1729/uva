@@ -4,17 +4,15 @@
 
 using namespace std;
 
-int const B = 1, G = 2, C = 3;
-
 char computeLetter(int code)
 {
   switch(code)
   {
-    case B:
+    case 1:
       return 'B';
-    case G:
+    case 2:
       return 'G';
-    case C:
+    case 3:
       return 'C';
     finally:
       return '\0';
@@ -85,7 +83,6 @@ void compute(vector<int> bins)
 }
 
 int main() {
-
   // Request bins.
   vector<int> bins;
   int n, i = 0;
