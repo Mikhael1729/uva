@@ -37,7 +37,8 @@ int combinations[18] = {
 };
 
 void compute(vector<int> bins)
-{ // j: indicates the current color position in a bin (1: brown, 2: green, 3: clear)
+{
+  // j: indicates the current color position in a bin (1: brown, 2: green, 3: clear)
   // k: indicates the bin where will the box that contains bottles of an specific color be put.
   // l: current bin in the series of 3 bins.
   string best = "ZZZ", worst = "";
@@ -54,8 +55,6 @@ void compute(vector<int> bins)
     if(!isInCurrentBin(index, bin))
       current += value;
 
-    //cout << "j: " << j << ", k: " << k << ", i: " << i << ", c:" << c << ", box: " <<  box << ", index: " << index << ", l: " << l << ", bin: " << bin << endl;
-
     if(k < 3)
       k++;
     else
@@ -67,10 +66,6 @@ void compute(vector<int> bins)
     // If is ended the process of a serie of 3 bins.
     if(box == 8)
     {
-      //cout << "worst: " << worst << ", best: " << best << endl;
-      //cout << "current: " << current << ", smallest: " << smallest << endl;
-
-
       // Update the value of the smallest quantity with the new one.
       if(smallest > current)
       {
