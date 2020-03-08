@@ -101,7 +101,6 @@ int main() {
       current.clear();
     }
   }
-  cout << "" << endl;
 
   return 0;
 }
