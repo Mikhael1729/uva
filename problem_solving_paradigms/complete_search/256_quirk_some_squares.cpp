@@ -23,8 +23,7 @@ string toString(int number, int digits)
   return converted;
 }
   
-int main() {
-  // Request numbers
+int main() { 
   int n;
   while(scanf("%d", &n))
   {
