@@ -1,32 +1,78 @@
 #include <iostream>
 #include <vector>
-#include <algorithm>
+#include <array>
 
 using namespace std;
 
-void compute(int building[])
+struct Building
 {
-  cout << "Hello: " << building[2] << endl;
-}
+  int left; // Left or starting point of current in horizontal axis.
+  int height; // Height of the current (vertical axis).
+  int right; // Right or ending point of current in horizontal axis.
+};
 
 int main()
 {
-  int n;
-  vector<int> buildings;
+  // Request buildings.
+  int n, i = 1;
+  vector<Building> buildings;
+  Building current;
   while(scanf("%d", &n))
-    buildings.push_back(n);
-
-  int building[3];
-  for(int i = 0, j = 0; i < buildings.size(); i++)
   {
-    building[j++] = buildings[i];
-    
-    // Reset the array to the next building secuence.
-    if((i + 1) % 3 == 0)
+    if(i == 1) current.l = n;
+    if(i == 2) current.h = n;
+    if(i == 3)
     {
-      compute(building);
-      j = 0;
+      current.r = n;
+      buildings.push_back(current);
+      i = 1;
     }
+
+    i++;
+  }
+
+  // Compute the skyline of the buildings.
+  vector<int> skyline;
+  Building current, next;
+  for(int i = 0, j = i + 1; i < buildings.length(); i++)
+  {
+    // Current building.
+    current = buildings[i];
+
+    // Draw the skyline.
+    skyline.push_back(buildings[i].left);
+    skyline.push_back(buildings[i].height);
+
+    // Select buildings to pass above (discarding the hidden buildings).
+    vector<Building> insideRange;
+    for(; next.left < current.r; j++)
+    {
+      next = buildings[j]
+      bool visibleWithCurrentBuilding =
+        next.right > current.right || next.height > current.height;
+
+      if(insideRange.length() == 0)
+      {
+        if(visibleWithCurrentBuilding)
+          insideRange.push_back(next);
+      }
+      else
+      {
+        bool visibleWithPreviousBuilding =
+        (
+          next.right > insideRange[j - 1].right &&
+          next.height > insideRange[j - 1].height
+        );
+
+        if(visibleWithCurrentBuilding || visibleWithPreviousBuilding)
+          insideRange.push_back(next);
+        else
+          insideRange.erase(insideRange.begin() + j - 1);
+      }
+    }
+
+    // Avoid the processed buildings.
+    i = j;
   }
 
   return 0;
