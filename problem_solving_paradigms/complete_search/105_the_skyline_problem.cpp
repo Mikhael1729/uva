@@ -14,11 +14,46 @@ struct Building
   { }
 };
 
+void drawInSkyline(Building next, Building previous, vector<int> skyline, vector<int> previousBuildings = vector<int>())
+{
+  bool areAdjacents = next.left <= previous.right;
+  if(!areAdjacents)
+  {
+    skyline.push_back(previous.right);
+    skyline.push_back(0);
+
+    skyline.push_back(next.left);
+    skyline.push_back(next.height);
+  }
+  else
+  {
+    // Register in the skyline vector the corresponding coordinates.
+    bool endsAfterPrevious = next.right > previous.right;
+    bool exceedsPreviousHeight = next.height > previous.height;
+
+    if(endsAfterPrevious && exceedsPreviousHeight)
+    {
+      skyline.push_back(next.left);
+      stkyline.push_back(next.height);
+    }
+    else if(endsAfterPrevious && !exceedsPreviousHeight)
+    {
+      skyline.push_back(previous.right);
+      skyline.push_back(next.height);
+    }
+    else if(!endsAfterPrevious && exceedsPreviousHeight)
+    {
+      skyline.push_back(next.left);
+      skyline.push_back(next.height);
+    }
+  }
+}
+
 int main()
 {
   // Request buildings.
   int n, i = 1;
-  vector<Building> buildings;
+  vector<Building> buildings; // TODO: Make it a vector of pointers: vector<Building*> buildings { new Building() };
   Building current;
   while(scanf("%d", &n))
   {
@@ -37,92 +72,73 @@ int main()
   // Compute the skyline of the buildings.
   vector<int> skyline;
   int size = buildings.length();
-  for(int i = 0, j = 1; i < size; i++)
+
+  // Add initial coordinates.
+  skyline.push_back(buildings[0].left);
+  skyline.push_back(buildings[0].height);
+
+  Building previous, next;
+  for(int i = 1; i < size; i++)
   {
-    // Current building.
-    Building current = buildings[i];
+    previous = buildings[i - 1];
+    next = buildings[i];
 
-    // Draw the first coordinates in the skyline.
-    skyline.push_back(current.left);
-    skyline.push_back(current.height);
+    vector<int> subSkyline;
 
-    // Do the following until reach a separated building or an overlaping one.
-    Building previous, next;
-    Building xBuilding = Building(), yBuilding = Building(),overlapingBuilding = Building(); // It's the higher building with the greater range. // It's the building a step before in range and heigth of the closeleBuilding.
-    for(j = i + 1; j < size; j++)
+    // Search for buildings that hides others.
+    for(int j = 1; j < skyline.size(); j += 2)
     {
-      previous = buildings[j-1];
-      next = buildings[j];
+      int x = j - 1; // 5
+      int y = j; // 6
 
-      // TODO: make the adjustement for possible yBuilding incorrect analisis.
-      bool buildingsAreSeparated = next.left > xBuilding.right;
-      if(buildingsAreSeparated)
+      // Know if the next building starts before another one in the skyline.
+      bool startsBefore = next.left < skyline[x];
+      if(startsBefore)
+      {
+        subSkyline = vector<int>(skyline.begin() + x, skyline.end());
+        skyline.erase(skyline.begin() + x, skyline.end())
         break;
-
-      // Delete hidden elements from the skyline.
-      //bool overlapsPreviousBuilding = (
-        //next.right > xBuilding.right &&
-        //next.height > yBuilding.height &&
-        //next.height > current.height &&
-        //next.right > current.right);
-
-      // TODO: Review the following analisis.
-      // Know when the following building hides the previous ones.
-      bool overlapsPreviousBuildings = (
-        next.left <= current.right &&
-        next.height >= yBuilding.height &&
-        next.right >= xBuilding.right);
-
-      if (overlapsPreviousBuildings)
-        skyline.erase(skyline.begin() + (i), skyline.end());
-
-      // Register in the skyline vector the corresponding coordinates.
-      bool exceedsPreviousRange = next.right > previous.right;
-      bool exceedsPreviousHeight = next.height > previous.height;
-
-      if(exceedsPreviousRange && exceedsPreviousHeight)
-      {
-        skyline.push_back(next.left);
-        stkyline.push_back(next.height);
-
-        // TODO: it's probably necessary to do something here.
       }
-      else if(exceedsPreviousRange && !exceedsPreviousHeight)
-      {
-        // Indicates x Coordinate
-        skyline.push_back(previous.right);
-
-        // Indicates y coordinate.
-        bool existsTraversalBuilding = xBuilding.right > previous.right;
-        if(!existsTraversalBuilding)
-          skyline.push_back(next.height); // TODO: analize the previous line.
-        else
-          skyline.push_back(xBuilding.height);
-      }
-      else if(!exceedsPreviousRange && exceedsPreviousHeight)
-      {
-        skyline.push_back(next.left);
-        skyline.push_back(next.height);
-
-        // TODO: it's probably necessary to do something here.
-      }
-
-      // TODO: There is a thing that it's necessary to be analized. :3
-      bool isHigherThanYBuilding = yBuilding.height < next.height;
-      bool exceedsXBuildingRange = xBuilding.right < next.right;
-
-      if(isHigherThanYBuilding)
-        yBuilding = next;
-      if(exceedsXBuildingRange)
-        xBuilding = next;
     }
 
-    // Draw end building coordinates of the last one before an empty space.
-    skyline.push_back(previous.right);
-    skyline.push_back(0);
+    // Draw in the skyline.
+    bool hideOtherBuildings = subSkyline.size() > 0;
+    if(!hideOtherBuildings)
+    {
+      drawInSkyline(previous, next, skyline);
+    }
+    else
+    {
+      for(int j = 1; j < subSkyline.size(); j += 2)
+      {
+        int x = j - 1; 
+        int y = j;
 
-    i = j;
+        bool coordinateIsInRange = next.right > subSkyline[x];
+        if(coordinateIsInRange)
+        {
+          bool isHigherThanCurrent = next.height > subSkyline[y];
+          if(isHigherThanCurrent)
+          {
+            subSkyline.erase(subSkyline.begin() + x, subSkyline.begin() + x + 1);
+            drawInSkyline(previous, next, skyline);
+          }
+          else
+          {
+            drawInSkyline(previous, next, subSkyline);
+          }
+        }
+      }
+
+      // Merge the sub skyline with the original one.
+      // TODO: If the sub skyline is without element there is no problem?
+      skyline.insert(skyline.end(), subSkyline.begin(), subSkyline.end());
+    }
   }
+
+  // Last building coordinate.
+  skyline.push_back(next.right);
+  skyline.push_back(0);
 
   return 0;
 }
