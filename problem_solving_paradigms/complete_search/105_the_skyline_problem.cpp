@@ -73,28 +73,6 @@ int main()
     }
   }
 
-  cout << "" << endl;
-
-  // Print buildings.
-  cout << "Buildings:\n" << endl;
-  for(int i = 0; i < buildings.size(); i++)
-  {
-    Building current = buildings[i];
-
-    cout << "(l: " << current.left << ", h: " << current.height << ", r: " << current.right << ")" << endl;
-  }
-
-  // Print preskyline.
-  cout << "" << endl;
-
-  cout << "Preskyline:\n" << endl;
-  for(map<int, int>::iterator it = preskyline.begin(); it != preskyline.end(); ++it)
-    cout << "key: " << it->first << ", value: " << it->second << endl;
-
-  cout << "" << endl;
-
-  // Print skyline.
-  cout << "Skyline:\n" << endl;
   int height = -1;
   int desviation2 = 0;
   for(map<int, int>::iterator it = preskyline.begin(); it != preskyline.end(); ++it)
