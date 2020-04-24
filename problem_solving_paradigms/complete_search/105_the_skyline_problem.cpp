@@ -1,6 +1,8 @@
 #include <iostream>
 #include <vector>
 #include <array>
+#include <list>
+#include <map>
 
 using namespace std;
 
@@ -14,41 +16,6 @@ struct Building
   { }
 };
 
-void drawInSkyline(Building next, Building previous, vector<int> skyline, vector<int> previousBuildings = vector<int>())
-{
-  bool areAdjacents = next.left <= previous.right;
-  if(!areAdjacents)
-  {
-    skyline.push_back(previous.right);
-    skyline.push_back(0);
-
-    skyline.push_back(next.left);
-    skyline.push_back(next.height);
-  }
-  else
-  {
-    // Register in the skyline vector the corresponding coordinates.
-    bool endsAfterPrevious = next.right > previous.right;
-    bool exceedsPreviousHeight = next.height > previous.height;
-
-    if(endsAfterPrevious && exceedsPreviousHeight)
-    {
-      skyline.push_back(next.left);
-      stkyline.push_back(next.height);
-    }
-    else if(endsAfterPrevious && !exceedsPreviousHeight)
-    {
-      skyline.push_back(previous.right);
-      skyline.push_back(next.height);
-    }
-    else if(!endsAfterPrevious && exceedsPreviousHeight)
-    {
-      skyline.push_back(next.left);
-      skyline.push_back(next.height);
-    }
-  }
-}
-
 int main()
 {
   // Request buildings.
@@ -57,88 +24,101 @@ int main()
   Building current;
   while(scanf("%d", &n))
   {
-    if(i == 1) current.l = n;
-    if(i == 2) current.h = n;
+    if(i == 1) current.left = n;
+    if(i == 2) current.height = n;
     if(i == 3)
     {
-      current.r = n;
+      current.right = n;
       buildings.push_back(current);
-      i = 1;
+      i = 0;
     }
 
     i++;
   }
 
   // Compute the skyline of the buildings.
-  vector<int> skyline;
-  int size = buildings.length();
+  map<int, int> preskyline;
 
-  // Add initial coordinates.
-  skyline.push_back(buildings[0].left);
-  skyline.push_back(buildings[0].height);
+  // Code the first building into preskyline.
+  Building first = buildings[0];
+  for(int i = first.left; i <= first.right; i++)
+    preskyline.insert(pair<int, int>(i, first.height));
 
-  Building previous, next;
-  for(int i = 1; i < size; i++)
+  // Code the rest of the buildings in the preskyline.
+  int desviation = 0;
+  for(int i = 1; i < buildings.size(); i++)
   {
-    previous = buildings[i - 1];
-    next = buildings[i];
+    Building current = buildings[i];
+    Building previous = buildings[i - 1];
+    map<int, int>::const_reverse_iterator last = preskyline.crbegin(); // Last encoded building.
 
-    vector<int> subSkyline;
+    // Encode separated buildings.
+    int x = current.left + desviation;
+    int y = current.height;
 
-    // Search for buildings that hides others.
-    for(int j = 1; j < skyline.size(); j += 2)
+    bool areSeparated = current.left > previous.right;
+    if(areSeparated)
     {
-      int x = j - 1; // 5
-      int y = j; // 6
-
-      // Know if the next building starts before another one in the skyline.
-      bool startsBefore = next.left < skyline[x];
-      if(startsBefore)
-      {
-        subSkyline = vector<int>(skyline.begin() + x, skyline.end());
-        skyline.erase(skyline.begin() + x, skyline.end())
-        break;
-      }
+      preskyline[x] *= -1; // Encode the separation of buildings (if exists a traversal buildings recognize it as an space with a negative value).
+      desviation++;
+      x++;
     }
 
-    // Draw in the skyline.
-    bool hideOtherBuildings = subSkyline.size() > 0;
-    if(!hideOtherBuildings)
+    // Encode non-separated buildings in the preskyline.
+    for(; x <= current.right + desviation; x++)
     {
-      drawInSkyline(previous, next, skyline);
-    }
-    else
-    {
-      for(int j = 1; j < subSkyline.size(); j += 2)
-      {
-        int x = j - 1; 
-        int y = j;
-
-        bool coordinateIsInRange = next.right > subSkyline[x];
-        if(coordinateIsInRange)
-        {
-          bool isHigherThanCurrent = next.height > subSkyline[y];
-          if(isHigherThanCurrent)
-          {
-            subSkyline.erase(subSkyline.begin() + x, subSkyline.begin() + x + 1);
-            drawInSkyline(previous, next, skyline);
-          }
-          else
-          {
-            drawInSkyline(previous, next, subSkyline);
-          }
-        }
-      }
-
-      // Merge the sub skyline with the original one.
-      // TODO: If the sub skyline is without element there is no problem?
-      skyline.insert(skyline.end(), subSkyline.begin(), subSkyline.end());
+      bool isNotHidden = (x >= last->first || y >= last->second);
+      if(isNotHidden)
+        preskyline[x] = y;
     }
   }
 
-  // Last building coordinate.
-  skyline.push_back(next.right);
-  skyline.push_back(0);
+  cout << "" << endl;
+
+  // Print buildings.
+  cout << "Buildings:\n" << endl;
+  for(int i = 0; i < buildings.size(); i++)
+  {
+    Building current = buildings[i];
+
+    cout << "(l: " << current.left << ", h: " << current.height << ", r: " << current.right << ")" << endl;
+  }
+
+  // Print preskyline.
+  cout << "" << endl;
+
+  cout << "Preskyline:\n" << endl;
+  for(map<int, int>::iterator it = preskyline.begin(); it != preskyline.end(); ++it)
+    cout << "key: " << it->first << ", value: " << it->second << endl;
+
+  cout << "" << endl;
+
+  // Print skyline.
+  cout << "Skyline:\n" << endl;
+  int height = -1;
+  int desviation2 = 0;
+  for(map<int, int>::iterator it = preskyline.begin(); it != preskyline.end(); ++it)
+  {
+    int x = it->first - desviation2;
+    int y = it->second;
+
+    if(y != height)
+    {
+      height = y;
+      if(y <= 0)
+      {
+        map<int, int>::iterator prev = it;
+        advance(prev, -1);
+        cout << prev->first - desviation2 << " " << y * -1 << " ";
+        desviation2++;
+      }
+      else
+        cout << x << " " << y << " ";
+    }
+  }
+
+  map<int, int>::const_reverse_iterator last = preskyline.crbegin(); // Last encoded building.
+  cout << last->first - desviation << " " << 0;
 
   return 0;
 }
