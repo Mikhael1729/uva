@@ -1,16 +1,14 @@
 #include <iostream>
-#include <vector>
-#include <array>
-#include <list>
 #include <map>
+#include <vector>
 
 using namespace std;
 
 struct Building
 {
-  int left; // Left or starting point of current in horizontal axis.
-  int height; // Height of the current (vertical axis).
-  int right; // Right or ending point of current in horizontal axis.
+  int left;
+  int height;
+  int right;
 
   Building(int left = -1, int height = -1, int right = -1) : left(left), height(height), right(right)
   { }
@@ -36,8 +34,7 @@ int main()
     i++;
   }
 
-  // Compute the skyline of the buildings.
-  map<int, int> preskyline;
+  map<int, int> preskyline; // Holds a representation of the buildings that helps to generate the skyline
 
   // Code the first building into preskyline.
   Building first = buildings[0];
@@ -74,7 +71,7 @@ int main()
     }
   }
 
-  // Print skyline
+  // Print skyline.
   int previousHeight = -1;
   desviation = 0;
   for(map<int, int>::iterator it = preskyline.begin(); it != preskyline.end(); ++it)
@@ -104,14 +101,14 @@ int main()
         // Because of the new separation, increase the x coordinate desviation.
         desviation++;
       }
-
       // Print current coordinate.
       else
         cout << x << " " << y << " ";
     }
   }
 
-  map<int, int>::const_reverse_iterator last = preskyline.crbegin(); // Last encoded building.
+  // Print last coordinates for the skyline.
+  map<int, int>::const_reverse_iterator last = preskyline.crbegin();
   cout << last->first - desviation << " " << 0;
 
   return 0;
