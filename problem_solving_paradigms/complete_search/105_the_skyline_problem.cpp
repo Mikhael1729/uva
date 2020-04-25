@@ -52,19 +52,20 @@ int main()
     Building previous = buildings[i - 1];
     map<int, int>::const_reverse_iterator last = preskyline.crbegin(); // Last encoded building.
 
-    // Encode separated buildings.
     int x = current.left + desviation;
     int y = current.height;
 
+    // Encode separation between previous building and the current one.
     bool areSeparated = current.left > previous.right;
     if(areSeparated)
     {
+      // Update values.
       preskyline[x] *= -1; // Encode the separation of buildings (if exists a traversal buildings recognize it as an space with a negative value).
       desviation++;
       x++;
     }
 
-    // Encode non-separated buildings in the preskyline.
+    // Encode the new building (a building will be hidden depending on its parameters).
     for(; x <= current.right + desviation; x++)
     {
       bool isNotHidden = (x >= last->first || y >= last->second);
@@ -73,23 +74,38 @@ int main()
     }
   }
 
-  int height = -1;
-  int desviation2 = 0;
+  // Print skyline
+  int previousHeight = -1;
+  desviation = 0;
   for(map<int, int>::iterator it = preskyline.begin(); it != preskyline.end(); ++it)
   {
-    int x = it->first - desviation2;
-    int y = it->second;
+    // Get coordinates.
+    int x = it->first - desviation, y = it->second;
 
-    if(y != height)
+    bool isNextRepresentation = y != previousHeight;
+    if(isNextRepresentation)
     {
-      height = y;
-      if(y <= 0)
+      previousHeight = y;
+
+      // Print buildings separation (separation with a traversal building or blank space between).
+      bool areSeparated= y <= 0; 
+      if(areSeparated)
       {
-        map<int, int>::iterator prev = it;
-        advance(prev, -1);
-        cout << prev->first - desviation2 << " " << y * -1 << " ";
-        desviation2++;
+        // Get previous coordinates.
+        map<int, int>::iterator previous = it;
+        advance(previous, -1);
+
+        // Adjust the current coordinates and print them (repressents the separation).
+        x = previous->first - desviation;
+        y *= -1;
+
+        cout << x << " " << y << " ";
+
+        // Because of the new separation, increase the x coordinate desviation.
+        desviation++;
       }
+
+      // Print current coordinate.
       else
         cout << x << " " << y << " ";
     }
