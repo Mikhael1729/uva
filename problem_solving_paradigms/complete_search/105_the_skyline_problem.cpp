@@ -1,6 +1,7 @@
 #include <iostream>
 #include <map>
 #include <vector>
+#include <limits>
 
 using namespace std;
 
@@ -37,39 +38,49 @@ int main()
   map<int, int> preskyline; // Holds a representation of the buildings that helps to generate the skyline
 
   // Code the first building into preskyline.
-  Building first = buildings[0];
-  for(int i = first.left; i <= first.right; i++)
-    preskyline.insert(pair<int, int>(i, first.height));
+  {
+    Building first = buildings[0];
+    for(int i = first.left; i <= first.right; i++)
+      preskyline.insert(pair<int, int>(i, first.height));
+  }
 
   // Code the rest of the buildings in the preskyline.
   int desviation = 0;
   for(int i = 1; i < buildings.size(); i++)
   {
     Building current = buildings[i];
-    Building previous = buildings[i - 1];
-    map<int, int>::const_reverse_iterator last = preskyline.crbegin(); // Last encoded building.
-
-    int x = current.left + desviation;
     int y = current.height;
+    int x = current.left + desviation;
 
-    // Encode separation between previous building and the current one.
-    bool areSeparated = current.left > previous.right;
-    if(areSeparated)
+    // TODO: Probably in the following lines there is the gap.
+    bool thereIsCrossBuilding = preskyline[x] > 0 && y > preskyline[x];  
+    if(thereIsCrossBuilding)
     {
-      // Update values.
-      preskyline[x] *= -1; // Encode the separation of buildings (if exists a traversal buildings recognize it as an space with a negative value).
+      preskyline[x] *= -1;
       desviation++;
       x++;
     }
 
-    // Encode the new building (a building will be hidden depending on its parameters).
-    for(; x <= current.right + desviation; x++)
+    int prevY = preskyline[x];
+    for(; x <= current.right; x++)
     {
-      bool isNotHidden = (x >= last->first || y >= last->second);
-      if(isNotHidden)
+      bool isHidden = y < preskyline[x];
+      bool endOfPreviuosBuilding = prevY != preskyline[x + 1];
+      bool endOfCurrentBuilding = x + 1 > current.right;
+
+      if(!isHidden || (endOfPreviuosBuilding && !endOfCurrentBuilding))
         preskyline[x] = y;
     }
   }
+
+  cout << "\ndesviation: " << desviation << endl;
+
+  // Print preskyline.
+  cout << "\nPreskyline:\n" << endl;
+  for(map<int, int>::iterator it = preskyline.begin(); it != preskyline.end(); ++it)
+    cout << it->first << " " << it->second << " " << endl;
+
+  cout << "\nSkyline:\n" << endl;
 
   // Print skyline.
   int previousHeight = -1;
@@ -77,39 +88,26 @@ int main()
   for(map<int, int>::iterator it = preskyline.begin(); it != preskyline.end(); ++it)
   {
     // Get coordinates.
-    int x = it->first - desviation, y = it->second;
+    int x = it->first - desviation;
+    int y = it->second;
+
+    if(y <= 0)
+    {
+      y *= -1;
+      desviation++;
+    }
 
     bool isNextRepresentation = y != previousHeight;
     if(isNextRepresentation)
     {
       previousHeight = y;
-
-      // Print buildings separation (separation with a traversal building or blank space between).
-      bool areSeparated= y <= 0; 
-      if(areSeparated)
-      {
-        // Get previous coordinates.
-        map<int, int>::iterator previous = it;
-        advance(previous, -1);
-
-        // Adjust the current coordinates and print them (repressents the separation).
-        x = previous->first - desviation;
-        y *= -1;
-
-        cout << x << " " << y << " ";
-
-        // Because of the new separation, increase the x coordinate desviation.
-        desviation++;
-      }
-      // Print current coordinate.
-      else
-        cout << x << " " << y << " ";
+      cout << x << " " << y << " ";
     }
   }
 
   // Print last coordinates for the skyline.
   map<int, int>::const_reverse_iterator last = preskyline.crbegin();
-  cout << last->first - desviation << " " << 0;
+  cout << last->first << " " << 0;
 
   return 0;
 }
