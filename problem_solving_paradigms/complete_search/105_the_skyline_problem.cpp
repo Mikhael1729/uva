@@ -62,12 +62,6 @@ struct BuildingEvent
     return event < other.event; 
   }
 
-  static bool isHigher(BuildingEvent &first, BuildingEvent &second)
-  {
-    return first.building->height > second.building->height;
-  }
-
-
   friend ostream& operator << (ostream& stream, const BuildingEvent& buildingEvent)
   {
     return stream << "BuildingEvent(" 
@@ -164,7 +158,7 @@ int main()
       if(isNotHidden)
       {
         skyline[x] = y;
-        cout << "x: " << x << "y: " << y << endl;
+        //cout << "x: " << x << "y: " << y << endl;
       }
 
       // Register the buildingEvent in the collection of events.
@@ -174,21 +168,46 @@ int main()
     }
     else
     {
-      BuildingEvent temp = buildingEvent;
-
       // Delete the process from the map of in process BuildingEvent.
+      BuildingEvent tmp = buildingEvent;
       inProcess.erase(buildingEvent.id);
 
-      // Find the higher ended process.
-      pair<int, BuildingEvent>* higher = findHigher(inProcess);
-  
-      int y1 = skyline[temp.coordinate];
-      int y2 = (higher != NULL ? higher->second.building->height : 0);
-      int y3 = buildingEvent.building->height;
-      
-      bool isNotHidden = y3 >= y1 && y3 > y2;
-      if(isNotHidden)
-        skyline[temp.coordinate] = temp.building->height;
+      // Draw in the skyline.
+      bool thereIsSeparation = true;
+      pair<int, BuildingEvent>* higher = NULL;
+      for(map<int, BuildingEvent>::iterator it = inProcess.begin(); it != inProcess.end(); ++it)
+      {
+        int inProcessHeight = it->second.building->height;
+        bool isHidden = tmp.building->height < inProcessHeight; 
+        // TODO: I think this is unnecessary. :3
+        cout << "it->second.building->height: " << it->second.building->height << endl;
+        cout << "tmp.building->height: " << tmp.building->height << endl;
+        cout << "isHidden: " << isHidden << endl << "\n";
+
+        if(!isHidden)
+        {
+          skyline[tmp.coordinate] = inProcessHeight; 
+          // Verify the start coordinate is not hidden.
+/*
+ *          for(int i = it->second.building->left; i < tmp.coordinate; i++)
+ *          {
+ *            if(skyline[i] > 0)
+ *            {
+ *              bool previousIsHidden = skyline[i] < inProcessHeight;
+ *              if(previousIsHidden)
+ *                skyline.erase(i);
+ *            }
+ *
+ *          }
+ */
+        }
+
+        if(thereIsSeparation)
+          thereIsSeparation = false;
+      }
+
+      if(thereIsSeparation)
+        skyline[tmp.coordinate] = 0;
     }
   }
 
