@@ -79,6 +79,25 @@ struct BuildingEvent
   }
 };
 
+pair<int, BuildingEvent>* findHigher(map<int, BuildingEvent> inProcess)
+{
+  pair<int, BuildingEvent>* higher = NULL;
+
+  for(map<int, BuildingEvent>::iterator it = inProcess.begin(); it != inProcess.end(); ++it)
+  {
+    if(higher != NULL)
+    {
+      bool isHigher = it->second.building->height > higher->second.building->height;
+      if(isHigher)
+        higher = new pair<int, BuildingEvent>(it->first, it->second);
+    }
+    else
+      higher = new pair<int, BuildingEvent>(it->first, it->second);
+  }
+
+  return higher;
+}
+
 int main()
 {
   // Request buildings.
@@ -130,13 +149,8 @@ int main()
     if(buildingEvent.event == STARTS)
     {
       // Find the height of the higher building in process.
-      int higher = 0;
-      for(map<int, BuildingEvent>::iterator it = inProcess.begin(); it != inProcess.end(); ++it)
-      {
-        int current = it->second.building->height;
-        if(current > higher)
-          higher = current;
-      }
+      pair<int, BuildingEvent>* higher = findHigher(inProcess);
+      int height = higher != NULL ? higher->second.building->height : 0;
 
       // Register the start coordinate of a building in the skyline.
       int x = buildingEvent.coordinate;
@@ -146,7 +160,7 @@ int main()
       //cout << "higher: " << higher << endl;
       //cout << "" << endl;
 
-      bool isNotHidden = y > higher;
+      bool isNotHidden = y > height;
       if(isNotHidden)
       {
         skyline[x] = y;
@@ -166,21 +180,10 @@ int main()
       inProcess.erase(buildingEvent.id);
 
       // Find the higher ended process.
-      pair<int, BuildingEvent>* higherEndedProcess = NULL;
-      for(map<int, BuildingEvent>::iterator it = inProcess.begin(); it != inProcess.end(); ++it)
-      {
-        if(higherEndedProcess != NULL)
-        {
-          bool isHigher = it->second.building->height > higherEndedProcess->second.building->height;
-          if(isHigher)
-            higherEndedProcess = new pair<int, BuildingEvent>(it->first, it->second);
-        }
-        else
-          higherEndedProcess = new pair<int, BuildingEvent>(it->first, it->second);
-      }
+      pair<int, BuildingEvent>* higher = findHigher(inProcess);
   
       int y1 = skyline[temp.coordinate];
-      int y2 = (higherEndedProcess != NULL ? higherEndedProcess->second.building->height : 0);
+      int y2 = (higher != NULL ? higher->second.building->height : 0);
       int y3 = buildingEvent.building->height;
       
       bool isNotHidden = y3 >= y1 && y3 > y2;
