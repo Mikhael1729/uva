@@ -1,9 +1,16 @@
+#include<algorithm>
 #include <iostream>
 #include <map>
 #include <vector>
 #include <limits>
 
 using namespace std;
+
+enum Event
+{
+  STARTS = 1,
+  ENDS = 2
+};
 
 struct Building
 {
@@ -13,101 +20,182 @@ struct Building
 
   Building(int left = -1, int height = -1, int right = -1) : left(left), height(height), right(right)
   { }
+
+  friend ostream& operator << (ostream& stream, const Building& building)
+  {
+     return stream << "Building(" << building.left << ", " << building.height << ", " << building.right << ")";
+  }
+};
+
+string toEventToString(Event event)
+{
+  switch(event)
+  {
+    case STARTS:
+      return "STARTS";
+    default:
+      return "ENDS";
+  }
+}
+
+struct BuildingEvent
+{
+  int coordinate;
+  Event event;
+  int id;
+  Building* building;
+
+  BuildingEvent(
+    int id = 0,
+    int coordinate = -1,
+    Event event = STARTS,
+    Building* building = new Building()
+  )
+    : id(id), coordinate(coordinate), event(event), building(building)
+  { }
+
+  bool operator < (BuildingEvent &other) const
+  {
+    if(coordinate != other.coordinate)
+      return coordinate < other.coordinate;
+
+    return event < other.event; 
+  }
+
+  static bool isHigher(BuildingEvent &first, BuildingEvent &second)
+  {
+    return first.building->height > second.building->height;
+  }
+
+
+  friend ostream& operator << (ostream& stream, const BuildingEvent& buildingEvent)
+  {
+    return stream << "BuildingEvent(" 
+      << buildingEvent.id
+      << ", " << buildingEvent.coordinate
+      << ", " << toEventToString(buildingEvent.event)
+      << ", " << *(buildingEvent.building)
+      << ")";
+  }
 };
 
 int main()
 {
   // Request buildings.
-  int n, i = 1;
-  vector<Building> buildings; // TODO: Make it a vector of pointers: vector<Building*> buildings { new Building() };
-  Building current;
-  while(scanf("%d", &n))
+  vector<Building> buildings;
+  vector<BuildingEvent> plan;
+
   {
-    if(i == 1) current.left = n;
-    if(i == 2) current.height = n;
-    if(i == 3)
+    int n, i = 1;
+    Building building;
+    while(scanf("%d", &n))
     {
-      current.right = n;
-      buildings.push_back(current);
-      i = 0;
-    }
+      if(i == 1)
+        building.left = n;
+      else if(i == 2)
+        building.height = n;
+      else
+      {
+        building.right = n;
+        buildings.push_back(building);
+        i = 0;
+      }
 
-    i++;
-  }
-
-  map<int, int> preskyline; // Holds a representation of the buildings that helps to generate the skyline
-
-  // Code the first building into preskyline.
-  {
-    Building first = buildings[0];
-    for(int i = first.left; i <= first.right; i++)
-      preskyline.insert(pair<int, int>(i, first.height));
-  }
-
-  // Code the rest of the buildings in the preskyline.
-  int desviation = 0;
-  for(int i = 1; i < buildings.size(); i++)
-  {
-    Building current = buildings[i];
-    int y = current.height;
-    int x = current.left + desviation;
-
-    // TODO: Probably in the following lines there is the gap.
-    bool thereIsCrossBuilding = preskyline[x] > 0 && y > preskyline[x];  
-    if(thereIsCrossBuilding)
-    {
-      preskyline[x] *= -1;
-      desviation++;
-      x++;
-    }
-
-    int prevY = preskyline[x];
-    for(; x <= current.right; x++)
-    {
-      bool isHidden = y < preskyline[x];
-      bool endOfPreviuosBuilding = prevY != preskyline[x + 1];
-      bool endOfCurrentBuilding = x + 1 > current.right;
-
-      if(!isHidden || (endOfPreviuosBuilding && !endOfCurrentBuilding))
-        preskyline[x] = y;
+      i++;
     }
   }
 
-  cout << "\ndesviation: " << desviation << endl;
-
-  // Print preskyline.
-  cout << "\nPreskyline:\n" << endl;
-  for(map<int, int>::iterator it = preskyline.begin(); it != preskyline.end(); ++it)
-    cout << it->first << " " << it->second << " " << endl;
-
-  cout << "\nSkyline:\n" << endl;
-
-  // Print skyline.
-  int previousHeight = -1;
-  desviation = 0;
-  for(map<int, int>::iterator it = preskyline.begin(); it != preskyline.end(); ++it)
+  int id = 1;
+  for(int i = 0 ; i < buildings.size(); i++)
   {
-    // Get coordinates.
-    int x = it->first - desviation;
-    int y = it->second;
+    Building* b = &buildings[i];
+    plan.push_back(BuildingEvent(id, b->left, STARTS, b));
+    plan.push_back(BuildingEvent(id++, b->right, ENDS, b));
+  }
 
-    if(y <= 0)
+  // Sort them.
+  sort(plan.begin(), plan.end());
+
+  cout << "\nPlan:\n" << endl;
+
+  // Compute the skyline.
+  int maximumNumber = 0;
+  map<int, BuildingEvent> inProcess; // Coordinates not yet placed in the skyline. 
+  map<int, int> skyline;
+
+  for(BuildingEvent buildingEvent : plan)
+  {
+    cout << buildingEvent << endl;
+
+    if(buildingEvent.event == STARTS)
     {
-      y *= -1;
-      desviation++;
+      // Find the height of the higher building in process.
+      int higher = 0;
+      for(map<int, BuildingEvent>::iterator it = inProcess.begin(); it != inProcess.end(); ++it)
+      {
+        int current = it->second.building->height;
+        if(current > higher)
+          higher = current;
+      }
+
+      // Register the start coordinate of a building in the skyline.
+      int x = buildingEvent.coordinate;
+      int y = buildingEvent.building->height;
+
+      //cout << buildingEvent << endl;
+      //cout << "higher: " << higher << endl;
+      //cout << "" << endl;
+
+      bool isNotHidden = y > higher;
+      if(isNotHidden)
+      {
+        skyline[x] = y;
+        cout << "x: " << x << "y: " << y << endl;
+      }
+
+      // Register the buildingEvent in the collection of events.
+      inProcess.insert(pair<int, BuildingEvent>(buildingEvent.id, buildingEvent));
+      int const size = inProcess.size();
+      maximumNumber = max(maximumNumber, size);
     }
-
-    bool isNextRepresentation = y != previousHeight;
-    if(isNextRepresentation)
+    else
     {
-      previousHeight = y;
-      cout << x << " " << y << " ";
+      BuildingEvent temp = buildingEvent;
+
+      // Delete the process from the map of in process BuildingEvent.
+      inProcess.erase(buildingEvent.id);
+
+      // Find the higher ended process.
+      pair<int, BuildingEvent>* higherEndedProcess = NULL;
+      for(map<int, BuildingEvent>::iterator it = inProcess.begin(); it != inProcess.end(); ++it)
+      {
+        if(higherEndedProcess != NULL)
+        {
+          bool isHigher = it->second.building->height > higherEndedProcess->second.building->height;
+          if(isHigher)
+            higherEndedProcess = new pair<int, BuildingEvent>(it->first, it->second);
+        }
+        else
+          higherEndedProcess = new pair<int, BuildingEvent>(it->first, it->second);
+      }
+  
+      int y1 = skyline[temp.coordinate];
+      int y2 = (higherEndedProcess != NULL ? higherEndedProcess->second.building->height : 0);
+      int y3 = buildingEvent.building->height;
+      
+      bool isNotHidden = y3 >= y1 && y3 > y2;
+      if(isNotHidden)
+        skyline[temp.coordinate] = temp.building->height;
     }
   }
 
-  // Print last coordinates for the skyline.
-  map<int, int>::const_reverse_iterator last = preskyline.crbegin();
-  cout << last->first << " " << 0;
+  // Print the maximum number of buildings at the same time.
+  cout << "\nmaximumNumber: " << maximumNumber << "\n" << endl;
+
+  // Print the skyline.
+  cout << "\nSkyline:" << "\n" << endl;
+  for(map<int, int>::iterator it = skyline.begin(); it != skyline.end(); ++it)
+    cout << it->first << ", " << it->second << " ";
 
   return 0;
 }
