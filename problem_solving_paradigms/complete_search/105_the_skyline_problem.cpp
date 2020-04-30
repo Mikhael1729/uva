@@ -119,11 +119,15 @@ int main()
   }
 
   int id = 1;
+  int last = 0;
   for(int i = 0 ; i < buildings.size(); i++)
   {
     Building* b = &buildings[i];
     plan.push_back(BuildingEvent(id, b->left, STARTS, b));
     plan.push_back(BuildingEvent(id++, b->right, ENDS, b));
+
+    if(b->right > last)
+      last = b->right;
   }
 
   // Sort them.
@@ -133,9 +137,16 @@ int main()
 
   // Compute the skyline.
   const int LAST_ID = id;
-  map<int, BuildingEvent> inProcess; // Coordinates not yet placed in the skyline. 
+  const int LAST_COORDINATE = last + 1;
+  map<int, BuildingEvent> inProcess; // Coordinates not yet placed in the skyline.
   map<int, int> preskyline;
-  map<int, int> skyline;
+  int skyline[LAST_COORDINATE] {};
+
+  cout << "LAST_COORDINATE: " << LAST_COORDINATE << endl;
+
+  for(int i = 0; i <= LAST_COORDINATE; i++)
+    skyline[i] = -1;
+
   bool unusable[LAST_ID] {  };
 
   for(BuildingEvent current : plan)
@@ -144,11 +155,20 @@ int main()
 
     if(current.event == STARTS)
     {
-      // Draw the coordinate.
-      bool thereAreEventsProcessing = inProcess.size() > 0;
-      skyline[current.coordinate] = current.building->height;
+      bool isHidden = false;
+      for(map<int, BuildingEvent>::iterator it = inProcess.begin(); it != inProcess.end(); ++it)
+      {
+        bool isSmaller = it->second.building->height > current.coordinate;
+        if(isSmaller)
+        {
+          isHidden = true;
+          break;
+        }
+      }
 
-      // Register the current building event as an event in process.
+      if(!isHidden)
+        skyline[current.coordinate] = current.building->height;
+
       inProcess.insert({ current.id, current });
     }
     else
@@ -158,42 +178,28 @@ int main()
       inProcess.erase(current.id);
 
       // Travel acroos the processing events to find new coordinates.
+      int x = -1, y = -1;
       for(map<int, BuildingEvent>::iterator it = inProcess.begin(); it != inProcess.end(); ++it)
       {
-        int height = it->second.building->height;
+        y = it->second.building->height;
 
-        bool isHigher = current.building->height > height;
-
+        bool isHigher = current.building->height > y;
         if(isHigher)
-          skyline[current.coordinate] = height;
+        {
+          x = current.coordinate;
+          skyline[x] = y;
+        }
         else
-          skyline[inProcess[it->second.id].coordinate] = height;
+        {
+          x = inProcess[it->second.id].coordinate;
+          skyline[x] = y;
+        }
       }
 
       // In the case there are no in process elements
       bool thereAreEventsProcessing = inProcess.size() == 0;
       if(thereAreEventsProcessing)
         skyline[current.coordinate] = 0;
-    
-      // Manage overlaping.
-      cout << "[startsEvent: " << startsEvent << "]" << endl;
-      map<int, int>::iterator startIt = skyline.find(startsEvent.coordinate);
-      map<int, int>::iterator endIt = skyline.find(current.coordinate);
-      cout << "[startIt->first: " << startIt->first << "]" << endl;
-      cout << "[startIt->second: " << startIt->second << "]" << endl;
-      cout << "[endIt->first: " << endIt->first << "]" << endl;
-      cout << "[endIt->second: " << endIt->second << "]" << endl;
-
-      for(map<int, int>::iterator it = startIt; it != endIt; ++it)
-      {
-        cout << "[current: " << current << "]" << endl;
-        cout << "[it->first: " << it->first << "]" << endl;
-        cout << "[it->second: " << it->second << "]" << endl;
-        cout << "" << endl;
-        bool isHidden = current.building->height > it->second;
-        if(isHidden)
-          skyline.erase(it->first);
-      }
     }
   }
 
@@ -201,12 +207,15 @@ int main()
   cout << "\nPreskyline:" << "\n" << endl;
   for(map<int, int>::iterator it = preskyline.begin(); it != preskyline.end(); ++it)
     cout << it->first << ", " << it->second << " " << endl;
-  
 
   // Print the skyline.
   cout << "\nSkyline:" << "\n" << endl;
-  for(map<int, int>::iterator it = skyline.begin(); it != skyline.end(); ++it)
-    cout << it->first << ", " << it->second << ", ";
+  for(int i = 0; i < LAST_COORDINATE; i++)
+  {
+    int height = skyline[i];
+    if(height > -1)
+      cout << i << ", " << height << ", ";
+  }
 
   return 0;
 }
