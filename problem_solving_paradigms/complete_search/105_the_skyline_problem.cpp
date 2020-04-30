@@ -43,13 +43,13 @@ struct BuildingEvent
   int coordinate;
   Event event;
   int id;
-  Building* building;
+  Building building;
 
   BuildingEvent(
     int id = 0,
     int coordinate = -1,
     Event event = STARTS,
-    Building* building = new Building()
+    Building building = Building()
   )
     : id(id), coordinate(coordinate), event(event), building(building)
   { }
@@ -59,47 +59,28 @@ struct BuildingEvent
     if(coordinate != other.coordinate)
       return coordinate < other.coordinate;
 
-    return event < other.event; 
+    return event < other.event;
   }
 
   friend ostream& operator << (ostream& stream, const BuildingEvent& buildingEvent)
   {
-    return stream << "BuildingEvent(" 
+    return stream << "BuildingEvent("
       << buildingEvent.id
       << ", " << buildingEvent.coordinate
       << ", " << toEventToString(buildingEvent.event)
-      << ", " << *(buildingEvent.building)
+      << ", " << buildingEvent.building
       << ")";
   }
 };
 
-pair<int, BuildingEvent>* findHigher(map<int, BuildingEvent> inProcess)
-{
-  pair<int, BuildingEvent>* higher = NULL;
-
-  for(map<int, BuildingEvent>::iterator it = inProcess.begin(); it != inProcess.end(); ++it)
-  {
-    if(higher != NULL)
-    {
-      bool isHigher = it->second.building->height > higher->second.building->height;
-      if(isHigher)
-        higher = new pair<int, BuildingEvent>(it->first, it->second);
-    }
-    else
-      higher = new pair<int, BuildingEvent>(it->first, it->second);
-  }
-
-  return higher;
-}
-
 int main()
 {
   // Request buildings.
-  vector<Building> buildings;
   vector<BuildingEvent> plan;
 
+  int last = 0;
   {
-    int n, i = 1;
+    int n, i = 1, id = 1;
     Building building;
     while(scanf("%d", &n))
     {
@@ -110,23 +91,20 @@ int main()
       else
       {
         building.right = n;
-        buildings.push_back(building);
+
+        // Register the coordinates as events.
+        plan.push_back(BuildingEvent(id, building.left, STARTS, building));
+        plan.push_back(BuildingEvent(id++, building.right, ENDS, building));
+
+        // Update the last right element.
+        if(building.right > last)
+          last = building.right;
+
         i = 0;
       }
 
       i++;
     }
-  }
-
-  int id = 1, last = 0;
-  for(int i = 0 ; i < buildings.size(); i++)
-  {
-    Building* b = &buildings[i];
-    plan.push_back(BuildingEvent(id, b->left, STARTS, b));
-    plan.push_back(BuildingEvent(id++, b->right, ENDS, b));
-
-    if(b->right > last)
-      last = b->right;
   }
 
   sort(plan.begin(), plan.end());
@@ -146,13 +124,13 @@ int main()
       bool isHidden = false;
       for(map<int, BuildingEvent>::iterator it = inProcess.begin(); it != inProcess.end(); ++it)
       {
-        isHidden = it->second.building->height > current.building->height;
+        isHidden = it->second.building.height > current.building.height;
         if(isHidden)
           break;
       }
 
       if(!isHidden)
-        skyline[current.coordinate] = current.building->height;
+        skyline[current.coordinate] = current.building.height;
 
       inProcess.insert({ current.id, current });
     }
@@ -161,7 +139,7 @@ int main()
       // Remove the corresponding start event from in process list.
       inProcess.erase(current.id);
 
-      int y = current.building->height;
+      int y = current.building.height;
 
       // Find the height to use in a non hidden end coordinate.
       BuildingEvent* higher = NULL;
@@ -169,14 +147,14 @@ int main()
       bool isHidden = false;
       for(map<int, BuildingEvent>::iterator it = inProcess.begin(); it != inProcess.end(); ++it)
       {
-        int y2 = it->second.building->height;
+        int y2 = it->second.building.height;
 
         isHidden =  y2 > y;
         if(isHidden)
           break;
         else
         {
-          if(higher != NULL && y2 > higher->building->height)
+          if(higher != NULL && y2 > higher->building.height)
             higher = &(it->second);
           else
             higher = &(it->second);
@@ -188,7 +166,7 @@ int main()
       {
         bool thereAreEventsProcessing = higher != NULL;
         if(thereAreEventsProcessing)
-          skyline[current.coordinate] = higher->building->height;
+          skyline[current.coordinate] = higher->building.height;
         else
           skyline[current.coordinate] = 0;
       }
