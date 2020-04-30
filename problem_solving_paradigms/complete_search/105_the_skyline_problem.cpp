@@ -95,11 +95,6 @@ int main()
         // Register the coordinates as events.
         plan.push_back(BuildingEvent(id, building.left, STARTS, building));
         plan.push_back(BuildingEvent(id++, building.right, ENDS, building));
-
-        // Update the last right element.
-        if(building.right > last)
-          last = building.right;
-
         i = 0;
       }
 
@@ -109,13 +104,8 @@ int main()
 
   sort(plan.begin(), plan.end());
 
-  const int LAST_COORDINATE = last + 1;
-
-  int skyline[LAST_COORDINATE] {};
-  for(int i = 0; i <= LAST_COORDINATE; i++)
-    skyline[i] = -1;
-
   // Compute the skyline.
+  map<int, int> skyline;
   map<int, BuildingEvent> inProcess; // Coordinates such that its final coordinate is not placed in the skyline yet.
   for(BuildingEvent current : plan)
   {
@@ -143,7 +133,6 @@ int main()
 
       // Find the height to use in a non hidden end coordinate.
       BuildingEvent* higher = NULL;
-
       bool isHidden = false;
       for(map<int, BuildingEvent>::iterator it = inProcess.begin(); it != inProcess.end(); ++it)
       {
@@ -175,12 +164,8 @@ int main()
 
 
   // Print the skyline.
-  for(int i = 0; i < LAST_COORDINATE; i++)
-  {
-    int height = skyline[i];
-    if(height > -1)
-      cout << i << " " << height << (i == LAST_COORDINATE -1 ? "" : " ");
-  }
+  for(map<int, int>::iterator it = skyline.begin(); it != skyline.end(); ++it)
+    cout << it->first << " " << it->second << " ";
 
   return 0;
 }
