@@ -133,37 +133,25 @@ int main()
   // Sort them.
   sort(plan.begin(), plan.end());
 
-  cout << "\nPlan:\n" << endl;
-
   // Compute the skyline.
-  const int LAST_ID = id;
   const int LAST_COORDINATE = last + 1;
   map<int, BuildingEvent> inProcess; // Coordinates not yet placed in the skyline.
   map<int, int> preskyline;
   int skyline[LAST_COORDINATE] {};
 
-  cout << "LAST_COORDINATE: " << LAST_COORDINATE << endl;
-
   for(int i = 0; i <= LAST_COORDINATE; i++)
     skyline[i] = -1;
 
-  bool unusable[LAST_ID] {  };
-
   for(BuildingEvent current : plan)
   {
-    cout << current << endl;
-
     if(current.event == STARTS)
     {
       bool isHidden = false;
       for(map<int, BuildingEvent>::iterator it = inProcess.begin(); it != inProcess.end(); ++it)
       {
-        bool isSmaller = it->second.building->height > current.coordinate;
-        if(isSmaller)
-        {
-          isHidden = true;
+        isHidden = it->second.building->height > current.building->height;
+        if(isHidden)
           break;
-        }
       }
 
       if(!isHidden)
@@ -174,47 +162,54 @@ int main()
     else
     {
       // Remove the corresponding start event from in process list.
-      BuildingEvent startsEvent = inProcess[current.id];
       inProcess.erase(current.id);
 
-      // Travel acroos the processing events to find new coordinates.
-      int x = -1, y = -1;
+      int y = current.building->height;
+
+      // Avoid put a hidden coordinate in the skyline.
+      BuildingEvent* higher = NULL;
+      bool isHidden = false;
       for(map<int, BuildingEvent>::iterator it = inProcess.begin(); it != inProcess.end(); ++it)
       {
-        y = it->second.building->height;
+        int y2 = it->second.building->height;
 
-        bool isHigher = current.building->height > y;
-        if(isHigher)
-        {
-          x = current.coordinate;
-          skyline[x] = y;
-        }
+        isHidden =  y2 > y;
+        if(isHidden)
+          break;
         else
         {
-          x = inProcess[it->second.id].coordinate;
-          skyline[x] = y;
+          if(higher != NULL && y2 > higher->building->height)
+            higher = &(it->second);
+          else
+            higher = &(it->second);
         }
       }
 
-      // In the case there are no in process elements
-      bool thereAreEventsProcessing = inProcess.size() == 0;
-      if(thereAreEventsProcessing)
-        skyline[current.coordinate] = 0;
+      if(!isHidden)
+      {
+        bool thereAreEventsProcessing = higher != NULL;
+        if(thereAreEventsProcessing)
+          skyline[current.coordinate] = higher->building->height;
+        else
+          skyline[current.coordinate] = 0;
+      }
     }
   }
 
   // Print the preskyline.
-  cout << "\nPreskyline:" << "\n" << endl;
-  for(map<int, int>::iterator it = preskyline.begin(); it != preskyline.end(); ++it)
-    cout << it->first << ", " << it->second << " " << endl;
+  /*
+   *cout << "\nPreskyline:" << "\n" << endl;
+   *for(map<int, int>::iterator it = preskyline.begin(); it != preskyline.end(); ++it)
+   *  cout << it->first << ", " << it->second << " " << endl;
+   */
 
   // Print the skyline.
-  cout << "\nSkyline:" << "\n" << endl;
+  //cout << "\nSkyline:" << "\n" << endl;
   for(int i = 0; i < LAST_COORDINATE; i++)
   {
     int height = skyline[i];
     if(height > -1)
-      cout << i << ", " << height << ", ";
+      cout << i << " " << height << (i == LAST_COORDINATE -1 ? "" : " ");
   }
 
   return 0;
