@@ -118,8 +118,7 @@ int main()
     }
   }
 
-  int id = 1;
-  int last = 0;
+  int id = 1, last = 0;
   for(int i = 0 ; i < buildings.size(); i++)
   {
     Building* b = &buildings[i];
@@ -130,18 +129,16 @@ int main()
       last = b->right;
   }
 
-  // Sort them.
   sort(plan.begin(), plan.end());
 
-  // Compute the skyline.
   const int LAST_COORDINATE = last + 1;
-  map<int, BuildingEvent> inProcess; // Coordinates not yet placed in the skyline.
-  map<int, int> preskyline;
-  int skyline[LAST_COORDINATE] {};
 
+  int skyline[LAST_COORDINATE] {};
   for(int i = 0; i <= LAST_COORDINATE; i++)
     skyline[i] = -1;
 
+  // Compute the skyline.
+  map<int, BuildingEvent> inProcess; // Coordinates such that its final coordinate is not placed in the skyline yet.
   for(BuildingEvent current : plan)
   {
     if(current.event == STARTS)
@@ -166,8 +163,9 @@ int main()
 
       int y = current.building->height;
 
-      // Avoid put a hidden coordinate in the skyline.
+      // Find the height to use in a non hidden end coordinate.
       BuildingEvent* higher = NULL;
+
       bool isHidden = false;
       for(map<int, BuildingEvent>::iterator it = inProcess.begin(); it != inProcess.end(); ++it)
       {
@@ -185,6 +183,7 @@ int main()
         }
       }
 
+      // Register the coordinate in the skyline.
       if(!isHidden)
       {
         bool thereAreEventsProcessing = higher != NULL;
@@ -196,15 +195,8 @@ int main()
     }
   }
 
-  // Print the preskyline.
-  /*
-   *cout << "\nPreskyline:" << "\n" << endl;
-   *for(map<int, int>::iterator it = preskyline.begin(); it != preskyline.end(); ++it)
-   *  cout << it->first << ", " << it->second << " " << endl;
-   */
 
   // Print the skyline.
-  //cout << "\nSkyline:" << "\n" << endl;
   for(int i = 0; i < LAST_COORDINATE; i++)
   {
     int height = skyline[i];
