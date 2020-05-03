@@ -147,10 +147,14 @@ int main()
     }
   }
 
-
   // Print the skyline.
   for(map<int, int>::iterator it = skyline.begin(); it != skyline.end(); ++it)
-    cout << it->first << " " << it->second << " ";
+  {
+    cout << it->first << " " << it->second;
+
+    if(it != skyline.end())
+      cout << " ";
+  }
 
   return 0;
 }
