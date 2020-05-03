@@ -94,6 +94,7 @@ int main()
   map<int, PointEvent> inProcess; // Coordinates such that its final coordinate is not placed in the skyline yet.
   for(PointEvent current : plan)
   {
+    cout << current << endl;
     if(current.event == STARTS)
     {
       bool isHidden = false;
@@ -128,8 +129,11 @@ int main()
           break;
         else
         {
-          if(higher != NULL && y2 > higher->y)
-            higher = &(it->second);
+          if(higher != NULL)
+          {
+            if(y2 > higher->y)
+              higher = &(it->second);
+          }
           else
             higher = &(it->second);
         }
